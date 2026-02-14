@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEFN Portfolio Strategy Case Study</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Fraunces:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0B2545;
+  --navy-dark: #081C36;
+  --navy-90: rgba(11,37,69,0.9);
+  --cyan: #1EA8CF;
+  --cyan-light: #E8F4F8;
+  --cyan-mid: #B3E5F6;
+  --green: #1B8A5A;
+  --green-light: #F0FFF4;
+  --amber: #D4920B;
+  --amber-light: #FFF8E6;
+  --red: #C0392B;
+  --red-light: #FFF0F0;
+  --purple: #6C63AC;
+  --purple-light: #F3F0FF;
+  --teal: #2BA5B5;
+  --dark: #1C1C1C;
+  --mid: #555;
+  --light: #F4F6F9;
+  --white: #fff;
+  --shadow: 0 2px 12px rgba(11,37,69,0.07);
+  --shadow-lg: 0 8px 32px rgba(11,37,69,0.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'DM Sans',sans-serif; background:var(--light); color:var(--dark); min-height:100vh; }
+
+.header { background:var(--navy); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid var(--cyan); }
+.header-left { display:flex; align-items:center; gap:12px; }
+.header-logo { width:34px; height:34px; background:var(--cyan); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; color:var(--navy); font-size:17px; }
+.header-title { color:var(--white); font-size:15px; font-weight:600; }
+.header-sub { color:var(--cyan); font-size:10px; letter-spacing:2px; text-transform:uppercase; font-weight:500; }
+.header-badge { background:rgba(30,168,207,0.15); color:var(--cyan); font-size:10px; font-weight:600; padding:5px 12px; border-radius:16px; }
+
+.main { max-width:960px; margin:0 auto; padding:24px 20px 60px; }
+
+/* Progress */
+.progress-bar { background:#dde3ea; height:5px; border-radius:3px; overflow:hidden; margin-bottom:6px; }
+.progress-fill { height:100%; background:linear-gradient(90deg,var(--cyan),var(--teal)); border-radius:3px; transition:width 0.5s ease; }
+.progress-info { display:flex; justify-content:space-between; font-size:11px; color:var(--mid); font-weight:500; margin-bottom:16px; }
+
+/* Case Header */
+.case-header { background:var(--navy); border-radius:14px; padding:28px 30px; margin-bottom:20px; position:relative; overflow:hidden; }
+.case-header::after { content:''; position:absolute; right:-30px; top:-30px; width:160px; height:160px; border-radius:50%; background:rgba(30,168,207,0.06); }
+.case-tag { display:inline-block; background:rgba(30,168,207,0.2); color:var(--cyan); font-size:10px; font-weight:600; padding:4px 12px; border-radius:14px; letter-spacing:1.2px; text-transform:uppercase; margin-bottom:10px; }
+.case-header h2 { color:var(--white); font-family:'Fraunces',serif; font-size:22px; font-weight:700; margin-bottom:6px; }
+.case-header p { color:var(--cyan-mid); font-size:13px; line-height:1.6; }
+
+/* Client Panel - persistent sidebar on larger screens */
+.content-wrap { display:grid; grid-template-columns:1fr; gap:20px; }
+@media(min-width:780px) { .content-wrap { grid-template-columns:280px 1fr; } }
+
+.client-panel { background:var(--white); border-radius:12px; box-shadow:var(--shadow); padding:20px; border-top:4px solid var(--cyan); height:fit-content; position:sticky; top:20px; }
+.client-panel h3 { font-size:13px; color:var(--navy); font-weight:700; margin-bottom:12px; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+.client-panel .cp-section { margin-bottom:14px; padding-bottom:12px; border-bottom:1px solid #eef1f5; }
+.client-panel .cp-section:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.client-panel .cp-label { font-size:10px; color:var(--mid); font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.client-panel .cp-row { display:flex; justify-content:space-between; font-size:12px; padding:3px 0; }
+.client-panel .cp-row .k { color:var(--mid); }
+.client-panel .cp-row .v { color:var(--dark); font-weight:600; }
+.client-panel .cp-alloc-bar { height:14px; border-radius:7px; display:flex; overflow:hidden; margin-top:6px; margin-bottom:4px; }
+.client-panel .cp-alloc-bar div { height:100%; transition:width 0.4s ease; }
+.alloc-legend { display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:6px; }
+.alloc-legend span { font-size:10px; color:var(--mid); display:flex; align-items:center; gap:4px; }
+.alloc-legend .dot { width:8px; height:8px; border-radius:2px; }
+
+/* Question Area */
+.q-card { background:var(--white); border-radius:12px; box-shadow:var(--shadow); padding:24px 26px; animation:slideUp 0.35s ease-out; }
+@keyframes slideUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+.q-phase { font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--cyan); margin-bottom:8px; }
+.q-text { font-family:'Fraunces',serif; font-size:17px; font-weight:600; color:var(--navy); line-height:1.5; margin-bottom:8px; }
+.q-context { background:var(--light); border-radius:8px; padding:12px 14px; font-size:12px; color:var(--mid); line-height:1.55; margin-bottom:18px; font-style:italic; }
+.q-context strong { color:var(--dark); font-style:normal; }
+
+/* Options */
+.options { display:flex; flex-direction:column; gap:9px; }
+.opt-btn { display:flex; align-items:flex-start; gap:10px; background:var(--light); border:2px solid transparent; border-radius:9px; padding:14px 16px; cursor:pointer; transition:all 0.2s; text-align:left; font-family:inherit; font-size:13px; color:var(--dark); line-height:1.5; width:100%; }
+.opt-btn:hover:not(:disabled) { border-color:var(--cyan); background:var(--cyan-light); }
+.opt-btn .letter { background:var(--navy); color:var(--white); min-width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0; }
+.opt-btn.correct { border-color:var(--green); background:var(--green-light); }
+.opt-btn.correct .letter { background:var(--green); }
+.opt-btn.wrong { border-color:var(--red); background:var(--red-light); }
+.opt-btn.wrong .letter { background:var(--red); }
+.opt-btn.mid { border-color:var(--amber); background:var(--amber-light); }
+.opt-btn.mid .letter { background:var(--amber); }
+.opt-btn.faded { opacity:0.45; pointer-events:none; }
+.opt-btn:disabled { cursor:default; }
+
+/* Feedback */
+.feedback { border-radius:10px; padding:18px 20px; margin-top:16px; display:none; animation:slideUp 0.3s ease-out; }
+.feedback.show { display:block; }
+.feedback.good { background:var(--green-light); border-left:4px solid var(--green); }
+.feedback.okay { background:var(--amber-light); border-left:4px solid var(--amber); }
+.feedback.bad { background:var(--red-light); border-left:4px solid var(--red); }
+.fb-title { font-weight:700; font-size:13px; margin-bottom:5px; }
+.fb-body { font-size:12px; color:var(--dark); line-height:1.6; }
+.fb-coach { background:rgba(255,255,255,0.55); border-radius:7px; padding:10px 14px; margin-top:10px; font-size:12px; line-height:1.6; }
+.fb-coach .coach-label { font-weight:700; color:var(--navy); font-size:10px; letter-spacing:1px; text-transform:uppercase; display:block; margin-bottom:3px; }
+
+/* Next */
+.next-btn { background:var(--cyan); color:var(--white); border:none; padding:12px 28px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; transition:all 0.2s; display:none; margin-top:14px; }
+.next-btn:hover { background:var(--teal); }
+.next-btn.show { display:inline-flex; align-items:center; gap:6px; }
+
+/* Decision Log */
+.decision-log { margin-top:16px; }
+.decision-log summary { font-size:12px; font-weight:600; color:var(--navy); cursor:pointer; padding:8px 0; }
+.decision-log .dl-item { font-size:11px; color:var(--mid); padding:4px 0 4px 12px; border-left:2px solid #dde3ea; margin:4px 0; line-height:1.5; }
+.decision-log .dl-item.good { border-left-color:var(--green); }
+.decision-log .dl-item.okay { border-left-color:var(--amber); }
+.decision-log .dl-item.bad { border-left-color:var(--red); }
+
+/* Score */
+.score-card { background:var(--white); border-radius:14px; padding:32px; box-shadow:var(--shadow-lg); text-align:center; animation:slideUp 0.4s ease-out; }
+.score-ring { width:110px; height:110px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; margin:0 auto 18px; border:5px solid; }
+.score-ring .num { font-family:'Fraunces',serif; font-size:32px; font-weight:700; }
+.score-ring .lbl { font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.score-card h2 { font-family:'Fraunces',serif; font-size:20px; color:var(--navy); margin-bottom:6px; }
+.score-card .msg { font-size:13px; color:var(--mid); line-height:1.6; margin-bottom:22px; max-width:540px; margin-left:auto; margin-right:auto; }
+.stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:24px; }
+.stat-box { background:var(--light); border-radius:10px; padding:14px; }
+.stat-box .sn { font-family:'Fraunces',serif; font-size:26px; font-weight:700; }
+.stat-box .sl { font-size:10px; color:var(--mid); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-top:2px; }
+.score-btn { background:var(--navy); color:var(--white); border:none; padding:12px 28px; border-radius:9px; font-family:inherit; font-size:13px; font-weight:600; cursor:pointer; margin:0 6px; transition:all 0.2s; }
+.score-btn:hover { background:var(--navy-dark); }
+.score-btn.sec { background:var(--white); color:var(--navy); border:2px solid #d0d8e0; }
+.score-btn.sec:hover { border-color:var(--navy); }
+
+/* Recommendation Summary */
+.rec-summary { background:var(--white); border-radius:12px; box-shadow:var(--shadow); padding:24px; margin-top:20px; text-align:left; }
+.rec-summary h3 { font-family:'Fraunces',serif; font-size:16px; color:var(--navy); margin-bottom:14px; }
+.rec-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #eef1f5; }
+.rec-row:last-child { border-bottom:none; }
+.rec-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+.rec-label { font-size:12px; font-weight:600; color:var(--navy); flex:1; }
+.rec-val { font-size:12px; color:var(--mid); }
+
+/* Intro Screen */
+.intro { text-align:center; max-width:680px; margin:40px auto; }
+.intro-icon { font-size:48px; margin-bottom:16px; }
+.intro h1 { font-family:'Fraunces',serif; font-size:28px; color:var(--navy); margin-bottom:10px; }
+.intro .sub { font-size:14px; color:var(--mid); line-height:1.6; margin-bottom:28px; }
+.intro .client-preview { background:var(--white); border-radius:12px; box-shadow:var(--shadow); padding:24px; text-align:left; margin-bottom:28px; border-left:4px solid var(--cyan); }
+.intro .client-preview h3 { font-size:14px; color:var(--navy); margin-bottom:10px; }
+.intro .client-preview .row { display:flex; justify-content:space-between; font-size:13px; padding:4px 0; }
+.intro .client-preview .row .k { color:var(--mid); }
+.intro .client-preview .row .v { color:var(--dark); font-weight:600; }
+.start-btn { background:var(--cyan); color:var(--white); border:none; padding:16px 40px; border-radius:10px; font-family:inherit; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s; }
+.start-btn:hover { background:var(--teal); transform:translateY(-1px); }
+.features { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:28px; }
+.feat { background:var(--white); border-radius:10px; padding:16px; box-shadow:var(--shadow); }
+.feat .fi { font-size:22px; margin-bottom:6px; }
+.feat .ft { font-size:12px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.feat .fd { font-size:11px; color:var(--mid); line-height:1.4; }
+
+@media(max-width:640px) {
+  .header { padding:12px 14px; }
+  .main { padding:18px 14px 40px; }
+  .case-header { padding:22px 18px; }
+  .case-header h2 { font-size:18px; }
+  .q-card { padding:20px 18px; }
+  .features { grid-template-columns:1fr; }
+  .stat-grid { grid-template-columns:1fr; }
+  .content-wrap { grid-template-columns:1fr; }
+  .client-panel { position:static; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">N</div>
+    <div>
+      <div class="header-title">NEFN Training Hub</div>
+      <div class="header-sub">Portfolio Strategy Case Study</div>
+    </div>
+  </div>
+  <div class="header-badge">For Internal Use Only</div>
+</div>
+
+<div class="main" id="app"></div>
+
+<script>
+// ===================== CLIENT DATA =====================
+const CLIENT = {
+  name: "The Martinelli Family",
+  people: "Anthony (57) & Diane (54)",
+  income: "$485,000 combined",
+  anthony_job: "Regional VP, medical device company",
+  diane_job: "Part-time interior designer ($45K/yr)",
+  retirement_goal: "Anthony wants to retire at 62 (5 years)",
+  risk: "Moderate — lost sleep in 2022 but didn't sell",
+  tax_bracket: "35% federal + 6.37% NJ state",
+  total_assets: "$2,840,000",
+  accounts: [
+    { name: "Anthony 401(k)", val: "$1,120,000", detail: "Target date 2030 fund (one fund)" },
+    { name: "Diane IRA", val: "$340,000", detail: "Mix of 12 individual stocks (self-selected)" },
+    { name: "Joint Brokerage", val: "$620,000", detail: "60% AAPL, 20% MSFT, 20% cash" },
+    { name: "Anthony IRA (rollover)", val: "$280,000", detail: "Money market — hasn't been invested since 2019 rollover" },
+    { name: "Savings / CDs", val: "$180,000", detail: "Laddered CDs earning 4.2% avg" },
+    { name: "Company Stock (RSUs)", val: "$300,000", detail: "Unvested RSUs vesting over next 3 years" },
+  ],
+  insurance: "Anthony: $400K group term. Diane: None.",
+  estate: "Simple wills from 2014. No trust. No POA update since.",
+  current_alloc: { stocks: 62, bonds: 3, cash: 22, alts: 0, other: 13 },
+  issues: [
+    "80% of brokerage is in two tech stocks (AAPL + MSFT)",
+    "$280K IRA sitting in money market for 5+ years",
+    "$1.12M 401(k) in a single target-date fund",
+    "No fixed income allocation despite 5-year retirement horizon",
+    "No alternatives exposure for diversification",
+    "RSUs add MORE concentration to an already tech-heavy portfolio",
+    "Diane's IRA: 12 random stocks with no strategy",
+    "Insurance gap: $400K group term with $485K income & non-working spouse goals",
+  ]
+};
+
+// ===================== QUESTIONS =====================
+const QUESTIONS = [
+  {
+    phase: "Initial Assessment",
+    num: 1,
+    question: "You've just reviewed the Martinellis' account statements. Before making any recommendations, what's the FIRST thing you should address with them?",
+    context: "Anthony seems proud of his Apple and Microsoft gains. Diane is quieter and mentions she \"just picks stocks she reads about.\" They've never worked with an advisor before.",
+    options: [
+      { text: "Start recommending specific investments to replace their current holdings.", quality: "bad" },
+      { text: "Walk them through what you see: the concentration risk, the uninvested IRA, and the lack of a cohesive strategy — then ask what their goals and concerns are before proposing anything.", quality: "good" },
+      { text: "Tell Anthony he needs to sell his Apple stock immediately because it's too risky.", quality: "bad" },
+      { text: "Compliment their portfolio growth and suggest a few minor tweaks.", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Diagnose before you prescribe.", text: "You need to show them the full picture — concentration, missing asset classes, uninvested cash — without making them feel stupid about past decisions. Then connect it to THEIR goals: retiring in 5 years, protecting Diane, generating income. The recommendations must flow from their goals, not your product shelf.", coach: "Frame it as: \"You've done well building this — now let's make sure it's working together as a system, not just a collection of accounts.\"" },
+      okay: { title: "Don't sugarcoat it.", text: "Complimenting a portfolio that's 80% in two stocks, has $280K uninvested, and zero fixed income 5 years from retirement does the client a disservice. You can acknowledge their growth without pretending the structure is sound." },
+      bad: { title: "Too fast, too aggressive.", text: "Recommending investments before understanding their goals, or demanding they sell winners, will destroy trust immediately. Anthony is emotionally attached to those Apple gains. You need to lead him to the conclusion — not force it." },
+    }
+  },
+  {
+    phase: "Account Structure",
+    num: 2,
+    question: "The Martinellis have 6 accounts spread across 4 custodians with no coordination. What account structure would you recommend to get them organized?",
+    context: "Anthony's 401(k) stays with his employer. The rollover IRA, Diane's IRA, and the joint brokerage can all be consolidated. The CDs are at a local bank.",
+    options: [
+      { text: "Move the rollover IRA, Diane's IRA, and joint brokerage into advisory accounts on your platform. Keep the 401(k) at the employer and the CDs at the bank for now.", quality: "good" },
+      { text: "Move everything — including the 401(k) and CDs — to your platform immediately.", quality: "bad" },
+      { text: "Leave everything where it is and just give them allocation advice.", quality: "okay" },
+      { text: "Only bring the joint brokerage over. Leave the IRAs where they are.", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Smart consolidation.", text: "You're consolidating what you CAN move ($1,240,000 across three accounts) into a coordinated advisory relationship while leaving what SHOULD stay (active 401(k) with employer match, CDs providing safe cash). This gives you oversight of $1.24M under management with the ability to influence the 401(k) allocation through advice.", coach: "Advisory vs. Brokerage Decision: The rollover IRA and Diane's IRA should be advisory accounts (ongoing management, rebalancing). The joint brokerage could be advisory OR brokerage depending on how actively you'll manage it — with $620K in concentrated stock that needs systematic unwinding, advisory makes sense here." },
+      okay: { title: "Partial solution.", text: "Leaving everything in place or only taking one account limits your ability to coordinate across the full picture. The power of consolidation is that you can manage asset location, rebalancing, and tax-loss harvesting holistically — you can't do that across 4 custodians." },
+      bad: { title: "You can't move an active 401(k).", text: "The 401(k) can't be moved while Anthony is still employed. And pulling CDs with no alternative plan disrupts their safe money. Always consolidate strategically, not indiscriminately." },
+    }
+  },
+  {
+    phase: "Concentration Risk",
+    num: 3,
+    question: "The joint brokerage is 60% Apple and 20% Microsoft — $496K in two stocks. Plus $300K in RSUs vesting over 3 years (also tech). Anthony says: \"Apple's been great to me. I don't want to sell.\" How do you handle this?",
+    context: "Anthony bought Apple at $45/share. His cost basis is about $85K on a position now worth $372K — meaning $287K in unrealized gains. Selling all at once would trigger ~$57K in federal + state capital gains taxes.",
+    options: [
+      { text: "\"I understand — and you've done incredibly well. I'm not asking you to sell it all. But here's the risk: your paycheck comes from a medical device company, your RSUs are tech, and 80% of your brokerage is tech. If the tech sector has a bad year like 2022 — when the Nasdaq dropped 33% — your portfolio could lose $500K+ while your RSUs lose value simultaneously. Let me show you how we can systematically reduce the concentration over 2-3 years in a tax-efficient way.\"", quality: "good" },
+      { text: "\"You need to sell all the Apple stock now. The concentration risk is too high.\"", quality: "bad" },
+      { text: "\"Apple is a great company, so let's just leave it and focus on the other accounts.\"", quality: "bad" },
+      { text: "\"What if we used a structured note linked to the S&P 500 with some of the proceeds? You'd get market participation with downside protection.\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Perfect — empathetic, factual, and strategic.", text: "You validated his success, quantified the risk in terms he can visualize (2022 Nasdaq drop), and proposed a multi-year approach that reduces both the concentration AND the tax hit. Systematic unwinding over 2-3 years using tax-loss harvesting from other positions and staying within favorable capital gains brackets is the right strategy.", coach: "Tax-Smart Unwinding: Sell $100-150K of Apple per year, harvest losses from Diane's 12 random stocks to offset gains, time sales around RSU vesting to manage annual tax exposure. This is a 2-3 year project — which means 2-3 years of advisory engagement." },
+      okay: { title: "Good product idea, wrong timing.", text: "Structured notes could absolutely be part of the reinvestment strategy later, but jumping to a product recommendation before Anthony agrees to the underlying concept (reducing concentration) puts the cart before the horse. Get buy-in on the strategy first, then discuss implementation vehicles." },
+      bad: { title: "Either too aggressive or too passive.", text: "Demanding he sell everything ignores the $57K tax hit and his emotional attachment. Leaving it alone ignores a career-threatening level of concentration risk. The answer is always in the middle: systematic, tax-efficient reduction over time." },
+    }
+  },
+  {
+    phase: "The Uninvested IRA",
+    num: 4,
+    question: "Anthony's $280K rollover IRA has been sitting in a money market fund since he rolled it over from a previous employer in 2019. That's 6+ years of missed market growth. How do you address this?",
+    context: "If this $280K had been invested in a 60/40 portfolio since 2019, it would be worth approximately $400-420K today. That's $120-140K in missed gains. Anthony says he \"just never got around to investing it.\"",
+    options: [
+      { text: "\"Anthony, this one's actually good news — it's the easiest win we can deliver. This $280K has been on the sidelines for six years. I'd recommend we build a diversified portfolio here aligned with your 5-year retirement timeline: a mix of intermediate bonds, some equity exposure for growth, and a sleeve of alternatives for diversification. We can dollar-cost average in over 3-4 months if moving it all at once makes you uncomfortable.\"", quality: "good" },
+      { text: "\"Let's put all $280K into an S&P 500 index fund today.\"", quality: "bad" },
+      { text: "\"Since it's been in cash this long, let's just keep it safe and buy CDs in the IRA.\"", quality: "okay" },
+      { text: "\"This IRA should go into a fixed indexed annuity. You'll get market-linked growth with downside protection, which is perfect for someone approaching retirement.\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Clear rationale and a confidence-building approach.", text: "You quantified the opportunity cost (missed $120-140K), proposed an allocation appropriate for the timeline (5 years = moderate, not aggressive), and offered dollar-cost averaging to reduce anxiety about investing a lump sum. This IRA is the perfect place for fixed income allocation since bond interest is taxed as ordinary income anyway — sheltering it in the IRA is tax-efficient.", coach: "Asset Location Win: Bonds in the IRA (tax-deferred) = shelters ordinary income. Keep equity index funds in the taxable brokerage where they get favorable long-term capital gains rates. This is the asset location strategy from the Tax-Smart training in action." },
+      okay: { title: "Not wrong, but not the best use of this account.", text: "CDs in an IRA waste the tax-sheltered space — CDs don't generate much tax anyway. A fixed indexed annuity inside an IRA is redundant since the IRA already provides tax deferral — you'd be wrapping a tax-deferred vehicle inside another tax-deferred vehicle, adding fees for a benefit he already has. Annuities make more sense in taxable accounts or with non-qualified money." },
+      bad: { title: "Too aggressive for the situation.", text: "Putting $280K into 100% equities for someone who's 5 years from retirement and admittedly lost sleep in 2022 is irresponsible. He needs a balanced approach that reflects his timeline and risk tolerance. And investing a lump sum all at once amplifies timing risk and anxiety." },
+    }
+  },
+  {
+    phase: "Diane's IRA",
+    num: 5,
+    question: "Diane's $340K IRA holds 12 individual stocks she picked from articles and TV shows. Some are up, some are down significantly. What's your approach?",
+    context: "Holdings include: Peloton (down 82%), Beyond Meat (down 74%), Disney (down 28%), Nvidia (up 340%), Tesla (up 45%), and 7 other random picks. No theme, no strategy. Diane admits she \"doesn't really know what she's doing.\"",
+    options: [
+      { text: "\"Let's do a full review of every position. Some of these are working and some aren't — but more importantly, there's no strategy connecting them. I'd recommend we transition this into a managed advisory portfolio. Here's the silver lining: the losses in Peloton, Beyond Meat, and Disney are actually valuable — we can harvest those losses to offset gains when we restructure the other accounts. We'll sell the losers first, bank the tax losses, then build a proper diversified portfolio over 60-90 days.\"", quality: "good" },
+      { text: "\"We should sell everything and start fresh with a model portfolio.\"", quality: "okay" },
+      { text: "\"Some of these are good stocks. Let's keep the winners and sell the losers.\"", quality: "bad" },
+      { text: "\"I'd leave this alone for now and focus on the bigger accounts first.\"", quality: "bad" },
+    ],
+    feedback: {
+      good: { title: "Tax-loss harvesting meets portfolio construction.", text: "You turned Diane's random picks into an advantage: the Peloton and Beyond Meat losses can offset Apple gains in the brokerage. This is sophisticated cross-account tax management that demonstrates real advisory value. Transitioning over 60-90 days avoids wash sales and lets you build positions systematically.", coach: "The Cross-Account Strategy: Sell Peloton (-82%) and Beyond Meat (-74%) in Diane's IRA to realize losses. Use those losses to offset capital gains from selling Apple in the joint brokerage. Result: you diversify BOTH accounts while minimizing the total tax bill. This is the kind of coordination clients can't do themselves." },
+      okay: { title: "Right direction, but you're leaving money on the table.", text: "Selling everything ignores the tax-loss harvesting opportunity. Those ugly losers are actually your best friends right now — they generate losses that offset gains elsewhere. And 'keeping winners, selling losers' is exactly backwards from a tax perspective." },
+      bad: { title: "Ignoring the problem doesn't make it go away.", text: "Leaving a $340K account with no strategy because 'there are bigger accounts' signals you don't take Diane seriously. She told you she doesn't know what she's doing — that's a cry for help. Address it." },
+    }
+  },
+  {
+    phase: "Fixed Income Strategy",
+    num: 6,
+    question: "The Martinellis currently have 3% bonds and 22% cash — with retirement 5 years away. They need more fixed income, but Anthony thinks \"bonds are boring and don't make money.\" How do you build the case for fixed income?",
+    context: "Their current portfolio is 62% stocks (mostly tech concentration), 3% bonds (inside the target-date fund), 22% cash, and 13% other. With a 5-year retirement horizon, they need income-generating assets and downside protection.",
+    options: [
+      { text: "\"Bonds aren't boring — they're your paycheck in retirement. Right now, you have almost no income-producing assets. In 5 years, when you stop working, you'll need $12,000-15,000/month in cash flow. That has to come from somewhere. I'd recommend building a bond ladder and intermediate bond allocation in your IRA where the income is tax-sheltered, along with some shorter-duration bonds in the brokerage. Target: 25-30% fixed income across all accounts.\"", quality: "good" },
+      { text: "\"You're right, bonds haven't done well lately. Let's skip them and use dividend stocks instead for income.\"", quality: "bad" },
+      { text: "\"We need to put 50% of your portfolio in bonds immediately to de-risk for retirement.\"", quality: "bad" },
+      { text: "\"What about a RILA instead of traditional bonds? You'd get some market upside with a buffer against losses — it's a newer approach to the conservative portion of the portfolio.\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "You connected bonds to his real need: income.", text: "When someone says 'bonds are boring,' they're thinking about returns. Reframe it as income and cash flow — the thing that replaces his paycheck in 5 years. The bond ladder strategy provides predictable maturity dates aligned with his income needs, and placing bonds in the IRA optimizes asset location. 25-30% fixed income for a 5-year-to-retirement client is appropriate.", coach: "The Income Conversation: Always translate fixed income into monthly dollars. '$400K in bonds generating 5% = $20,000/year in income' is more powerful than talking about yields and durations. Make it tangible." },
+      okay: { title: "RILAs have a role, but not as a bond replacement.", text: "A RILA (Registered Index-Linked Annuity) can be part of the moderate-growth allocation, but it's not fixed income — it's equity participation with a buffer. It doesn't provide the predictable income stream or capital preservation that bonds offer. Think of RILAs as the bridge between stocks and bonds, not a substitute for either." },
+      bad: { title: "Wrong direction.", text: "Skipping bonds entirely ignores the fundamental need for stable income in retirement. And jumping to 50% bonds overnight would mean selling massive equity positions (triggering huge tax bills) and potentially underperforming during the remaining accumulation years. The transition should be gradual." },
+    }
+  },
+  {
+    phase: "Annuity Opportunity",
+    num: 7,
+    question: "Anthony says: \"I'm worried about running out of money. My dad lived to 91 and my mom is still going at 88.\" This is a longevity concern. What role could an annuity play?",
+    context: "With family longevity and a 5-year retirement horizon, Anthony could have a 30+ year retirement. $2.84M is substantial, but 30 years of withdrawals, inflation, and potential healthcare costs could strain even a well-built portfolio.",
+    options: [
+      { text: "\"Annuities are expensive and have high fees. You don't need one with $2.84M.\"", quality: "bad" },
+      { text: "\"That's a legitimate concern — and it's exactly what guaranteed income is designed for. What I'd recommend is using a portion — maybe $300-400K — to purchase a deferred income annuity that begins paying out at 67 or 70. That creates a guaranteed income floor ON TOP of Social Security that you can never outlive. The rest of the portfolio stays invested for growth. Think of it as your personal pension.\"", quality: "good" },
+      { text: "\"Let's put $1.5M into a variable annuity with a living benefit rider. It'll give you guaranteed income AND market growth.\"", quality: "bad" },
+      { text: "\"Let's add a fixed indexed annuity with an income rider. You'd get guaranteed growth credits and a guaranteed withdrawal rate when you retire.\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Perfectly sized and perfectly positioned.", text: "$300-400K is roughly 12-15% of their portfolio — enough to create a meaningful income floor without over-annuitizing. A deferred income annuity (DIA) starting at 67-70 pairs beautifully with Social Security to cover base expenses, while the remaining $2.4M+ stays invested for growth and flexibility. 'Your personal pension' is the perfect framing for someone whose dad lived to 91.", coach: "The Income Floor Strategy: Social Security (~$5,500/mo combined at FRA) + DIA income (~$2,500-3,000/mo) = $8,000-8,500/mo guaranteed floor. Remaining portfolio covers discretionary spending, travel, healthcare, and legacy. This is the gold standard for retirement income design." },
+      okay: { title: "FIAs can work, but be precise about why.", text: "A fixed indexed annuity with an income rider is viable, but the accumulation phase credit rates and withdrawal rates vary dramatically by product. Make sure you can justify the specific product mechanics and show how it compares to the DIA approach. Don't recommend something you can't explain simply." },
+      bad: { title: "Wrong amount or wrong product.", text: "Saying they don't need an annuity ignores a legitimate longevity risk. Putting $1.5M (over half the portfolio) into a variable annuity with high fees is overkill — you'd lock up too much liquidity and the fee drag would be enormous. Right-sizing is everything: enough for security, not so much that you sacrifice flexibility." },
+    }
+  },
+  {
+    phase: "Structured Notes",
+    num: 8,
+    question: "After discussing the concentration unwind, Anthony asks: \"If I sell Apple, where does the money go? I don't want it just sitting in a mutual fund earning 8%.\" He's used to higher returns from concentrated positions. Where do structured notes fit?",
+    context: "You'll be systematically selling $100-150K of Apple per year over 2-3 years. Anthony is comfortable with tech stocks because he understands them. He wants the reinvested money to feel different from a generic balanced fund.",
+    options: [
+      { text: "\"Here's where structured notes can be powerful. As we transition out of Apple, we can allocate a portion — say 10-15% of the overall portfolio — into structured notes that are linked to a broad index like the S&P 500 but come with a downside buffer. For example, a 2-year note with 100% participation in S&P gains, capped at 18%, with a 15% hard buffer against losses. You're still participating in the market, but with defined risk — which is exactly what you need as you approach retirement.\"", quality: "good" },
+      { text: "\"Let's put all the Apple proceeds into structured notes for maximum protection.\"", quality: "bad" },
+      { text: "\"Structured notes are too complex. Let's just use index funds.\"", quality: "okay" },
+      { text: "\"We should use autocallable structured notes with 25% barriers on individual tech stocks.\"", quality: "bad" },
+    ],
+    feedback: {
+      good: { title: "Right size, right structure, right context.", text: "10-15% of the portfolio in structured notes is appropriate — it's meaningful enough to matter but not so much that it creates liquidity risk. The S&P-linked note with a buffer speaks directly to Anthony's desire for growth potential with more security. Explaining the cap and buffer in simple terms shows product knowledge without overwhelming the client.", coach: "Structured Note Sizing: Keep structured notes to 10-20% of total portfolio. Use them as the 'moderate growth with protection' sleeve between pure equity and pure fixed income. Always explain: what's the upside cap, what's the downside buffer/barrier, what's the term, and what happens if the issuer defaults (credit risk)." },
+      okay: { title: "Index funds are fine but miss the opportunity.", text: "Anthony specifically said he wants something that feels different. Moving from Apple to a Vanguard index fund will feel like a downgrade to him psychologically. Structured notes bridge the gap between his appetite for growth and his approaching need for protection. Don't dismiss a tool just because it's complex." },
+      bad: { title: "Oversized or too risky.", text: "Putting ALL Apple proceeds into structured notes creates illiquidity risk — notes have defined terms and early exit is costly. And autocallable notes on individual tech stocks INCREASE concentration risk rather than reducing it. The whole point is diversification away from single-stock exposure." },
+    }
+  },
+  {
+    phase: "Alternative Investments",
+    num: 9,
+    question: "The Martinellis currently have 0% in alternatives. With a $2.84M portfolio, they qualify for many alternative investment options. What role should alternatives play?",
+    context: "Anthony asks: \"What are alternatives? My brother-in-law mentioned something about private credit at his advisor.\" Diane looks skeptical. They've never invested in anything other than stocks, bonds, and cash.",
+    options: [
+      { text: "\"Alternatives are investments outside traditional stocks and bonds — things like private credit, real estate funds, and hedge strategies. They're valuable because they don't move in lockstep with the stock market. I'd recommend a 5-10% allocation — maybe $150-250K — spread across 2-3 strategies: a private credit fund for steady income, a real estate fund for inflation protection, and possibly a hedged equity fund. These are longer-term, less liquid investments, so we'd use money you won't need for 3-5+ years.\"", quality: "good" },
+      { text: "\"Let's put $800K into a private equity fund. The returns are much better than public markets.\"", quality: "bad" },
+      { text: "\"Alternatives are too risky and complex for most people. Let's stick with stocks and bonds.\"", quality: "okay" },
+      { text: "\"Your brother-in-law is right about private credit. Let's put your entire fixed income allocation into a private credit fund — better yields than bonds.\"", quality: "bad" },
+    ],
+    feedback: {
+      good: { title: "Appropriate sizing with clear education.", text: "5-10% in alternatives for a $2.84M portfolio is standard and defensible. You explained WHAT they are (simple), WHY they matter (low correlation to stocks), and HOW you'd implement (3 specific strategies with different purposes). Mentioning liquidity constraints shows responsibility. This is how you introduce a sophisticated concept to first-time alternative investors.", coach: "The 3-Fund Alternative Sleeve: Private credit (income, 7-10% yields), real estate (inflation hedge, income), hedged equity (equity participation with less volatility). Each serves a different purpose and reduces overall portfolio correlation. For Guardian/PAS clients, check which alternative platforms are available on your approved list." },
+      okay: { title: "Dismissing alternatives shortchanges the client.", text: "With $2.84M, the Martinellis can absolutely benefit from alternatives. Saying they're 'too complex' sells the client short and limits your ability to differentiate from a DIY approach or a basic robo-advisor. If you can't explain alternatives simply, that's a training gap — not a reason to avoid them." },
+      bad: { title: "Wildly oversized or inappropriate.", text: "$800K in a single private equity fund is way too concentrated and illiquid for someone 5 years from retirement. And replacing their entire fixed income with private credit ignores liquidity needs — private credit funds often have quarterly redemption with lockups. Alternatives complement a portfolio; they don't replace core asset classes." },
+    }
+  },
+  {
+    phase: "401(k) Optimization",
+    num: 10,
+    question: "Anthony's $1.12M 401(k) is 100% in a target-date 2030 fund. It's the largest single account. What's your recommendation?",
+    context: "Target-date 2030 funds are typically ~45% stocks, ~45% bonds, ~10% other — reasonably allocated for 2030 retirement. However, it's one fund with no customization, and Anthony doesn't know what's inside it.",
+    options: [
+      { text: "\"The target-date fund isn't bad — it's appropriately allocated for your timeline. But here's the issue: it's one fund managing $1.12M with no customization for YOUR situation. It doesn't know you have $620K in tech stocks in your brokerage. It doesn't coordinate with your other accounts. I'd recommend we review the fund options in your 401(k) plan and build a custom allocation that complements what we're doing in the advisory accounts — specifically, we might underweight equities here since you're overweight elsewhere, and add a stable value or bond fund to balance the overall picture.\"", quality: "good" },
+      { text: "\"Roll it over to an IRA at our firm so we can manage it directly.\"", quality: "bad" },
+      { text: "\"Target-date funds are fine. Let's leave it and focus on the other accounts.\"", quality: "okay" },
+      { text: "\"Let's move everything into the S&P 500 index option in the 401(k) for maximum growth.\"", quality: "bad" },
+    ],
+    feedback: {
+      good: { title: "This is holistic thinking.", text: "You acknowledged the target-date fund isn't terrible (building trust), then explained the limitation: it doesn't know about the rest of his portfolio. By customizing the 401(k) allocation to COMPLEMENT the advisory accounts, you're demonstrating the value of coordinated management. This is what separates a financial planner from a product salesperson.", coach: "Cross-Account Coordination: If the brokerage is overweight equities (Apple/MSFT), tilt the 401(k) toward bonds and stable value. If the IRA will hold intermediate bonds, tilt the 401(k) toward international equity or small cap for diversification. Each account plays a role in the overall allocation — not in isolation." },
+      okay: { title: "Leaving it alone is easy but not optimal.", text: "The target-date fund isn't wrong in isolation, but it's blind to the rest of the portfolio. A 45% equity allocation inside the 401(k) PLUS 80% equity in the brokerage means the actual portfolio-wide equity exposure is much higher than the target-date fund intends. You need to manage the whole picture." },
+      bad: { title: "Can't roll an active 401(k), and 100% equity is wrong.", text: "Anthony can't roll over a 401(k) while still employed at the company. And putting $1.12M into 100% S&P 500 for a 57-year-old who lost sleep in 2022 is reckless — especially with retirement in 5 years." },
+    }
+  },
+  {
+    phase: "Tax Strategy",
+    num: 11,
+    question: "You're building a multi-year tax plan. The Martinellis are in the 35% federal bracket now, but in retirement (at 62) their income will drop significantly before Social Security starts. What's the tax opportunity?",
+    context: "Current income: $485K (35% bracket). At 62: Diane's $45K + investment income only — potentially dropping to the 22-24% bracket for 3-5 years before Social Security and RMDs kick in. This creates a window.",
+    options: [
+      { text: "\"There's a golden window here. Between Anthony's retirement at 62 and when Social Security and RMDs start at 67-70, your income drops dramatically. That's 5-8 years where you'll be in a MUCH lower tax bracket. We should use that window for three things: Roth conversions from the 401(k)/IRA at lower rates, realizing capital gains from the Apple position at 15% instead of 23.8%, and front-loading income to fill up the lower brackets. This could save you $100,000+ in lifetime taxes.\"", quality: "good" },
+      { text: "\"Let's do a huge Roth conversion right now while you're still working — might as well get it over with.\"", quality: "bad" },
+      { text: "\"We'll deal with taxes when you retire. For now, let's focus on the investment allocation.\"", quality: "bad" },
+      { text: "\"I'd recommend maximizing your pre-tax 401(k) contributions for the remaining 5 years to reduce your current tax bill.\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "This is advanced planning that clients can't do alone.", text: "The gap between retirement and Social Security/RMDs is one of the most valuable windows in financial planning. Roth conversions at 22% instead of 35% saves 13 cents on every dollar converted. Capital gains at 15% instead of 23.8% (including NIIT) saves nearly 9% on every dollar of gains. Over 5-8 years, this is potentially $100-200K in tax savings — real money that justifies your advisory fee many times over.", coach: "The Tax Bracket Arbitrage: Map out the projected bracket for each year from 62 to 72. Fill up the 22% and 24% brackets with Roth conversions and gain realization. This is the single highest-value planning strategy for pre-retirees and the one that most clearly differentiates you from a DIY approach." },
+      okay: { title: "Good near-term advice, but you missed the bigger opportunity.", text: "Maximizing pre-tax 401(k) contributions is smart for the next 5 years — it reduces the 35% tax bill. But the MUCH bigger opportunity is what happens AFTER he retires. A Roth conversion strategy during the low-income years could save $100K+ over the following decade. Always think multi-year." },
+      bad: { title: "Terrible timing or no strategy at all.", text: "Converting at 35% now when you could convert at 22% in 5 years throws away 13% of the conversion amount in unnecessary taxes. And 'dealing with taxes later' means missing the single biggest planning opportunity in their financial life. Tax planning isn't something you bolt on — it drives the entire strategy." },
+    }
+  },
+  {
+    phase: "Insurance Gap",
+    num: 12,
+    question: "Anthony has $400K group term through his employer. No personal coverage. Diane has nothing. He's planning to retire in 5 years — when the group term disappears. What's the insurance conversation?",
+    context: "Anthony: 57, good health. Diane: 54, good health, hasn't worked full-time in years. If Anthony dies before or shortly after retirement, Diane would need to support herself potentially for 30+ years with limited earning capacity.",
+    options: [
+      { text: "\"Here's a gap most people don't think about: your group term vanishes the day you retire. You go from $400K to $0 overnight. Diane would be left with the portfolio, but no safety net if the markets happened to be down. I'd recommend two things: First, a $500K-$1M 20-year term policy on Anthony — it's cheap at 57 in good health and covers the critical years. Second, let's explore whether a smaller permanent policy makes sense for estate planning and as a tax-free legacy asset. On Diane, she needs at least a term policy to protect the family during the remaining working years.\"", quality: "good" },
+      { text: "\"With $2.84M in assets, you're self-insured. You don't need life insurance.\"", quality: "bad" },
+      { text: "\"Let's get you a $2M whole life policy to replace the group coverage.\"", quality: "bad" },
+      { text: "\"We should look into converting your group term to an individual policy before you retire.\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Blended strategy with clear rationale.", text: "Term insurance for the critical retirement transition years is affordable and essential. The permanent policy conversation opens the door to cash value accumulation and estate planning. And insuring Diane — the spouse with no coverage and limited earning capacity — shows holistic thinking. This is where NEFN's insurance capability creates separation from wirehouses.", coach: "The NEFN Advantage: This is the conversation Morgan Stanley CAN'T have. They'd refer Anthony to an insurance agent who doesn't know his financial plan. You design and implement the coverage as part of the overall strategy. Insurance + investments + planning under one roof = our competitive moat." },
+      okay: { title: "Conversion is an option, but usually not the best one.", text: "Group-to-individual conversions are typically expensive (they don't require a medical exam, so they're priced for unhealthy people). If Anthony is healthy, he'll almost always get a better rate underwriting a new individual policy. Conversion is the backup plan, not the first choice." },
+      bad: { title: "Either dangerous or oversized.", text: "Self-insured at $2.84M ignores sequence-of-returns risk — if Anthony dies in a bear market, the portfolio could be worth $1.8M and Diane would be in trouble. And $2M whole life at 57 would cost $30-40K/year in premiums, which is massively oversized for their needs." },
+    }
+  },
+  {
+    phase: "Building the Recommendation",
+    num: 13,
+    question: "You've completed the full analysis. Now you need to present a proposed target allocation for the Martinellis' $2.84M portfolio. Which allocation is most appropriate?",
+    context: "Current: 62% stocks (tech concentrated) / 3% bonds / 22% cash / 0% alternatives / 13% other. Goals: Retire at 62, income of $14K/mo needed, longevity protection, moderate risk tolerance.",
+    options: [
+      { text: "40% Equities (diversified, global) / 30% Fixed Income (bond ladder + core bonds) / 10-12% Annuity (deferred income) / 10% Structured Notes (buffered) / 5-8% Alternatives (private credit, real estate) / 5% Cash", quality: "good" },
+      { text: "70% Equities / 20% Bonds / 10% Cash", quality: "bad" },
+      { text: "25% Equities / 50% Bonds / 15% Cash / 10% Annuity", quality: "okay" },
+      { text: "30% Equities / 20% Bonds / 20% Annuities / 15% Structured Notes / 10% Alternatives / 5% Cash", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "Well-balanced, diversified, and appropriate.", text: "This allocation addresses every issue: equities are diversified away from tech concentration, fixed income provides the income foundation, the annuity creates a guaranteed floor, structured notes bridge growth and protection, alternatives add non-correlated return streams, and cash covers near-term needs. Each sleeve has a purpose, and the total risk profile is appropriate for a 5-year pre-retirement timeline.", coach: "How to Present It: Don't show a pie chart and hope they understand. Walk through each sleeve and explain its JOB: 'The fixed income sleeve is your paycheck replacement. The annuity is your longevity insurance. The equities are your growth engine. The alternatives reduce your dependence on the stock market. The structured notes let you participate in growth with training wheels.' Give each piece a role in the story." },
+      okay: { title: "Reasonable but sub-optimal.", text: "25/50 is too conservative — they still have 5 years of working and earning, plus 30+ years of retirement. They need growth. 30/20/20/15/10 over-allocates to annuities and structured notes at the expense of liquidity and flexibility. The right allocation uses all the tools but in the right proportions." },
+      bad: { title: "Way too aggressive.", text: "70% equities for a 57-year-old who lost sleep in 2022 with a 5-year retirement horizon is irresponsible. This doesn't solve any of the problems you identified: no income strategy, no downside protection, no diversification beyond stocks and bonds." },
+    }
+  },
+  {
+    phase: "Implementation",
+    num: 14,
+    question: "You're presenting the plan to the Martinellis. Anthony is on board but Diane asks: \"This is a lot of change. Can we do this gradually? I'm nervous about moving everything at once.\" How do you respond?",
+    context: "Diane is risk-averse and has been burned by her own stock-picking. She's comfortable with change in theory but anxious about execution. Anthony is ready to go. You need both on board.",
+    options: [
+      { text: "\"Diane, that's a really smart instinct — and I'd actually recommend the same thing. Here's how we'd do it: Phase 1 (Month 1-2): Consolidate accounts and invest the $280K money market IRA — that's the easiest win with no selling required. Phase 2 (Month 2-4): Harvest the losses in your IRA and reinvest into the new allocation. Phase 3 (Month 3-12): Systematically reduce the Apple/Microsoft concentration over the year, using the harvested losses to offset gains. Phase 4 (Month 6-12): Implement the annuity and alternatives once the core portfolio is in place. Nothing happens all at once. We do this in stages and you'll see progress every month.\"", quality: "good" },
+      { text: "\"I understand your concern, but we really should move quickly. Markets could shift and we don't want to miss the opportunity.\"", quality: "bad" },
+      { text: "\"Sure, we can go as slowly as you want. No rush at all.\"", quality: "okay" },
+      { text: "\"How about we just start with one account and see how it goes before we commit to the rest?\"", quality: "okay" },
+    ],
+    feedback: {
+      good: { title: "A phased plan that respects her anxiety while maintaining momentum.", text: "You validated her concern, proposed a concrete timeline with 4 phases, started with the lowest-anxiety action (investing idle cash), and ended with the most complex moves (annuity, alternatives). Each phase builds confidence for the next. Diane can see the roadmap and know exactly what's happening when — nothing is a surprise.", coach: "Implementation is where advisors lose clients. The best plan in the world fails if the client gets scared during execution. A phased approach with clear milestones keeps both spouses engaged and builds trust month over month. Send a progress update after every phase completes." },
+      okay: { title: "Either too passive or too fragmented.", text: "'Go as slowly as you want' has no structure and risks losing momentum entirely. Starting with one account treats the problem piecemeal instead of holistically. The strength of your recommendation is that it's coordinated across ALL accounts — fragmenting the implementation undermines that." },
+      bad: { title: "You just invalidated her feelings.", text: "Telling an anxious person to hurry up because 'markets could shift' is the opposite of what she needs. You're confirming her fear that financial advisors push people into things they're not comfortable with. Honor the concern, then provide the structure." },
+    }
+  },
+  {
+    phase: "Securing the Relationship",
+    num: 15,
+    question: "The meeting is wrapping up. Both Anthony and Diane are nodding and engaged. Anthony says: \"This all makes sense. What do we need to do to get started?\" What's your close?",
+    context: "You've spent 90 minutes together. The plan is comprehensive. They understand the phased approach. Now you need to convert this into a client engagement.",
+    options: [
+      { text: "\"Great — I'm glad this resonated. Here's what I'd suggest: let me formalize everything we discussed into a written financial plan and investment policy statement. I'll have that ready in about a week. In the meantime, I'll send you the account paperwork to get the consolidation started — it's straightforward and we can do most of it electronically. I'll also send you that document checklist for your tax returns and insurance policies so I can finalize the tax analysis. Let's schedule a follow-up in two weeks to review the formal plan, sign off, and begin Phase 1. Does that Tuesday the 25th work for both of you?\"", quality: "good" },
+      { text: "\"Let me send you some paperwork and you can get started when you're ready.\"", quality: "bad" },
+      { text: "\"I'll need you to sign the advisory agreements today so we can get your accounts transferred right away.\"", quality: "okay" },
+      { text: "\"Take the plan home, think about it, and call me when you're ready to move forward.\"", quality: "bad" },
+    ],
+    feedback: {
+      good: { title: "Structured, specific, and high-momentum.", text: "You gave them three clear next steps (written plan, paperwork, document checklist), a specific follow-up date (the 25th), and framed everything as already in motion. The question wasn't 'do you want to proceed?' — it was 'does Tuesday the 25th work?' This is a soft but definitive close. They leave feeling like the process has started, not like they have a decision to make.", coach: "The Final Rule: Never leave a meeting without a specific date and time for the next one. 'I'll call you next week' results in a 30% follow-through rate. 'Does Tuesday the 25th at 10am work?' results in an 85% rate. Be specific. Be definitive. Respect their time by putting it on the calendar." },
+      okay: { title: "Signing today is fine, but might feel pushy.", text: "Some clients are ready to sign immediately and that's great — don't stop them. But asking for signatures at the end of a 90-minute meeting can feel like pressure, especially for Diane. Offering the paperwork to take home and review, with a scheduled follow-up to finalize, gives them agency without losing momentum." },
+      bad: { title: "You just let $2.84M walk out the door.", text: "'Send paperwork when you're ready' and 'call me when you're ready' are advisor suicide. Without a scheduled follow-up, inertia takes over. They'll go home, get busy, and your beautiful plan will sit in their email inbox forever. Always secure the next meeting before they leave." },
+    }
+  }
+];
+
+// ===================== STATE =====================
+let started = false;
+let qIdx = 0;
+let answered = false;
+let log = [];
+let score = { good:0, okay:0, bad:0 };
+
+const app = document.getElementById('app');
+
+// ===================== RENDER =====================
+function render() {
+  if (!started) return renderIntro();
+  if (qIdx >= QUESTIONS.length) return renderResults();
+  renderQuestion();
+}
+
+function renderIntro() {
+  const ac = CLIENT.current_alloc;
+  app.innerHTML = `
+    <div class="intro">
+      <div class="intro-icon">📊</div>
+      <h1>Portfolio Strategy Case Study</h1>
+      <p class="sub">Work through a complete client engagement — from initial assessment through implementation. Every question builds on the last, just like a real advisory relationship. 15 questions covering allocation analysis, advisory vs. brokerage, annuities, structured notes, and alternatives.</p>
+      <div class="features">
+        <div class="feat"><div class="fi">🎯</div><div class="ft">Builds Sequentially</div><div class="fd">Each question advances the case — your early decisions shape later recommendations.</div></div>
+        <div class="feat"><div class="fi">💼</div><div class="ft">Real Products</div><div class="fd">Advisory, brokerage, annuities, structured notes, alternatives, tax strategy.</div></div>
+        <div class="feat"><div class="fi">📝</div><div class="ft">Coaching Notes</div><div class="fd">Expert feedback on every answer with scripts and implementation tips.</div></div>
+      </div>
+      <div class="client-preview">
+        <h3>📋 Meet Your Clients: ${CLIENT.name}</h3>
+        <div class="row"><span class="k">Clients</span><span class="v">${CLIENT.people}</span></div>
+        <div class="row"><span class="k">Income</span><span class="v">${CLIENT.income}</span></div>
+        <div class="row"><span class="k">Anthony</span><span class="v">${CLIENT.anthony_job}</span></div>
+        <div class="row"><span class="k">Diane</span><span class="v">${CLIENT.diane_job}</span></div>
+        <div class="row"><span class="k">Retirement Goal</span><span class="v">${CLIENT.retirement_goal}</span></div>
+        <div class="row"><span class="k">Total Assets</span><span class="v">${CLIENT.total_assets}</span></div>
+        <div class="row"><span class="k">Risk Tolerance</span><span class="v">${CLIENT.risk}</span></div>
+        <div class="row" style="margin-top:8px;padding-top:8px;border-top:1px solid #eef1f5"><span class="k">Key Issue</span><span class="v" style="color:var(--red)">80% of brokerage in 2 tech stocks, $280K uninvested, 0% alternatives, no fixed income plan</span></div>
+      </div>
+      <button class="start-btn" onclick="startCase()">Begin Case Study →</button>
+    </div>`;
+}
+
+function startCase() { started=true; qIdx=0; answered=false; log=[]; score={good:0,okay:0,bad:0}; render(); }
+
+function renderQuestion() {
+  const q = QUESTIONS[qIdx];
+  const pct = (qIdx/QUESTIONS.length*100).toFixed(0);
+  const letters = ['A','B','C','D'];
+  const ac = CLIENT.current_alloc;
+
+  let logHtml = '';
+  if (log.length) {
+    logHtml = '<details class="decision-log"><summary>📋 Your Decisions So Far ('+log.length+')</summary>';
+    log.forEach(l => { logHtml += `<div class="dl-item ${l.quality}"><strong>Q${l.num}:</strong> ${l.text}</div>`; });
+    logHtml += '</details>';
+  }
+
+  app.innerHTML = `
+    <div class="progress-info"><span>Case Study: ${CLIENT.name}</span><span>Question ${qIdx+1} of ${QUESTIONS.length}</span></div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="case-header">
+      <div class="case-tag">${q.phase} — Question ${q.num} of 15</div>
+      <h2>${q.question}</h2>
+      ${q.context ? `<p>${q.context}</p>` : ''}
+    </div>
+    <div class="content-wrap">
+      <div class="client-panel">
+        <h3>📋 Client Snapshot</h3>
+        <div class="cp-section">
+          <div class="cp-label">Household</div>
+          <div class="cp-row"><span class="k">Clients</span><span class="v">${CLIENT.people}</span></div>
+          <div class="cp-row"><span class="k">Income</span><span class="v">${CLIENT.income}</span></div>
+          <div class="cp-row"><span class="k">Retire</span><span class="v">5 years (age 62)</span></div>
+          <div class="cp-row"><span class="k">Tax Bracket</span><span class="v">35% + NJ</span></div>
+        </div>
+        <div class="cp-section">
+          <div class="cp-label">Current Allocation</div>
+          <div class="cp-alloc-bar">
+            <div style="width:${ac.stocks}%;background:var(--cyan)"></div>
+            <div style="width:${ac.bonds}%;background:var(--green)"></div>
+            <div style="width:${ac.cash}%;background:var(--amber)"></div>
+            <div style="width:${ac.alts}%;background:var(--purple)"></div>
+            <div style="width:${ac.other}%;background:#ccc"></div>
+          </div>
+          <div class="alloc-legend">
+            <span><span class="dot" style="background:var(--cyan)"></span>${ac.stocks}% Stocks</span>
+            <span><span class="dot" style="background:var(--green)"></span>${ac.bonds}% Bonds</span>
+            <span><span class="dot" style="background:var(--amber)"></span>${ac.cash}% Cash</span>
+            <span><span class="dot" style="background:var(--purple)"></span>${ac.alts}% Alts</span>
+          </div>
+        </div>
+        <div class="cp-section">
+          <div class="cp-label">Accounts</div>
+          ${CLIENT.accounts.map(a => `<div class="cp-row"><span class="k" style="font-size:10px">${a.name}</span><span class="v" style="font-size:10px">${a.val}</span></div>`).join('')}
+        </div>
+        ${logHtml}
+      </div>
+      <div>
+        <div class="q-card">
+          <div class="q-phase">${q.phase}</div>
+          <div class="options" id="opts">
+            ${q.options.map((o,i) => `<button class="opt-btn" id="o${i}" onclick="pick(${i})" ${answered?'disabled':''}><span class="letter">${letters[i]}</span><span>${o.text}</span></button>`).join('')}
+          </div>
+          <div class="feedback" id="fb"></div>
+          <button class="next-btn" id="nxt" onclick="next()">Continue →</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function pick(idx) {
+  if (answered) return;
+  answered = true;
+  const q = QUESTIONS[qIdx];
+  const sel = q.options[idx];
+  score[sel.quality]++;
+  log.push({ num: q.num, text: sel.text.substring(0,80)+'...', quality: sel.quality });
+
+  q.options.forEach((o,i) => {
+    const btn = document.getElementById('o'+i);
+    btn.disabled = true;
+    if (i===idx) btn.classList.add(sel.quality==='good'?'correct':sel.quality==='bad'?'wrong':'mid');
+    else if (o.quality==='good' && sel.quality!=='good') btn.classList.add('correct');
+    else btn.classList.add('faded');
+  });
+
+  const fb = q.feedback[sel.quality];
+  if (fb && fb.title) {
+    const el = document.getElementById('fb');
+    el.className = `feedback show ${sel.quality==='good'?'good':sel.quality==='bad'?'bad':'okay'}`;
+    el.innerHTML = `
+      <div class="fb-title">${sel.quality==='good'?'✅':sel.quality==='bad'?'❌':'⚠️'} ${fb.title}</div>
+      <div class="fb-body">${fb.text}</div>
+      ${fb.coach ? `<div class="fb-coach"><span class="coach-label">💡 Coaching Note</span>${fb.coach}</div>` : ''}`;
+  }
+  document.getElementById('nxt').classList.add('show');
+}
+
+function next() { qIdx++; answered=false; render(); window.scrollTo({top:0,behavior:'smooth'}); }
+
+function renderResults() {
+  const total = score.good+score.okay+score.bad;
+  const pct = Math.round(score.good/total*100);
+  const clr = pct>=75?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+  const title = pct>=75?'Strong Advisory Skills':pct>=50?'Solid Foundation':'Keep Building';
+  const msg = pct>=75
+    ? "You demonstrated strong diagnostic instincts, appropriate product selection, and the ability to coordinate across accounts, products, and tax strategies. You're ready for complex client engagements."
+    : pct>=50
+    ? "You've got a good grasp of the fundamentals but missed some advanced planning opportunities. Review the coaching notes — especially around tax strategy, product sizing, and implementation phasing."
+    : "This case study covers advanced concepts that take time to master. Focus on the coaching notes and consider reviewing the Tax-Smart Investing, Life Insurance, and Asset Allocation training decks for foundational concepts.";
+
+  app.innerHTML = `
+    <div class="score-card">
+      <div class="score-ring" style="border-color:${clr}">
+        <div class="num" style="color:${clr}">${pct}%</div>
+        <div class="lbl" style="color:${clr}">Score</div>
+      </div>
+      <h2>${title}</h2>
+      <p class="msg">${msg}</p>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="sn" style="color:var(--green)">${score.good}</div><div class="sl">Best Response</div></div>
+        <div class="stat-box"><div class="sn" style="color:var(--amber)">${score.okay}</div><div class="sl">Acceptable</div></div>
+        <div class="stat-box"><div class="sn" style="color:var(--red)">${score.bad}</div><div class="sl">Needs Work</div></div>
+      </div>
+      <button class="score-btn" onclick="startCase()">Try Again</button>
+      <button class="score-btn sec" onclick="started=false;render()">Back to Overview</button>
+    </div>
+    <div class="rec-summary">
+      <h3>Recommended Portfolio: The Martinelli Plan</h3>
+      <div class="rec-row"><div class="rec-dot" style="background:var(--cyan)"></div><div class="rec-label">Diversified Equities (US, Intl, Small Cap)</div><div class="rec-val">~40%  |  $1,136K</div></div>
+      <div class="rec-row"><div class="rec-dot" style="background:var(--green)"></div><div class="rec-label">Fixed Income (Bond Ladder + Core Bonds)</div><div class="rec-val">~28%  |  $795K</div></div>
+      <div class="rec-row"><div class="rec-dot" style="background:var(--amber)"></div><div class="rec-label">Deferred Income Annuity</div><div class="rec-val">~12%  |  $340K</div></div>
+      <div class="rec-row"><div class="rec-dot" style="background:var(--teal)"></div><div class="rec-label">Structured Notes (Buffered S&P)</div><div class="rec-val">~8%  |  $227K</div></div>
+      <div class="rec-row"><div class="rec-dot" style="background:var(--purple)"></div><div class="rec-label">Alternatives (Private Credit, RE, Hedge)</div><div class="rec-val">~7%  |  $199K</div></div>
+      <div class="rec-row"><div class="rec-dot" style="background:#bbb"></div><div class="rec-label">Cash & Short-Term Reserves</div><div class="rec-val">~5%  |  $142K</div></div>
+    </div>`;
+}
+
+render();
+</script>
+</body>
+</html>
